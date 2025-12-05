@@ -7,13 +7,15 @@ import (
 )
 
 func main() {
-	cfg := &config.ApiConfig{}
+	state := &config.ApiConfig{}
 
-	handlerFileServ := cfg.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("./app"))))
+	handlerFileServ := state.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("./app"))))
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/healthz", cfg.HandleHealthzStatus)
-	mux.HandleFunc("GET /admin/metrics", cfg.HandleMetricsLoad)
-	mux.HandleFunc("POST /admin/reset", cfg.HandleMetricsReset)
+	mux.HandleFunc("POST /admin/reset", state.HandleMetricsReset)
+	mux.HandleFunc("GET /admin/metrics", state.HandleMetricsLoad)
+	mux.HandleFunc("GET /api/healthz", config.HandleHealthzStatus)
+
+	mux.HandleFunc("POST /api/validate_chirp", config.HandleValidateChirp)
 	mux.Handle("/app/", handlerFileServ)
 
 	server := &http.Server{
