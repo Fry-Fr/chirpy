@@ -8,22 +8,18 @@ import (
 	"github.com/Fry-Fr/chirpy/internal/database"
 )
 
-type State struct {
-	ApiConfig *ApiConfig
-	DB        *database.Queries
-}
-
 type ApiConfig struct {
 	FileserverHits atomic.Int32
+	DB             *database.Queries
 }
 
-func (s *State) ConnectDatabase() error {
+func (cfg *ApiConfig) ConnectDatabase() error {
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		return err
 	}
 	dbQueries := database.New(db)
-	s.DB = dbQueries
+	cfg.DB = dbQueries
 	return nil
 }

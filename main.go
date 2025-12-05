@@ -11,17 +11,15 @@ import (
 
 func main() {
 	godotenv.Load()
-	state := &config.State{
-		ApiConfig: &config.ApiConfig{},
-	}
-	if err := state.ConnectDatabase(); err != nil {
+	cfg := &config.ApiConfig{}
+	if err := cfg.ConnectDatabase(); err != nil {
 		log.Printf("Error ConnectDatabase: %v\n", err)
 	}
 
-	handlerFileServ := state.ApiConfig.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("./app"))))
+	handlerFileServ := cfg.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("./app"))))
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /admin/reset", state.ApiConfig.HandleMetricsReset)
-	mux.HandleFunc("GET /admin/metrics", state.ApiConfig.HandleMetricsLoad)
+	mux.HandleFunc("POST /admin/reset", cfg.HandleMetricsReset)
+	mux.HandleFunc("GET /admin/metrics", cfg.HandleMetricsLoad)
 	mux.HandleFunc("GET /api/healthz", config.HandleHealthzStatus)
 
 	mux.HandleFunc("POST /api/validate_chirp", config.HandleValidateChirp)
