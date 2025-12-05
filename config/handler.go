@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 
@@ -19,7 +20,18 @@ func HandleHealthzStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *ApiConfig) HandleMetricsReset(w http.ResponseWriter, r *http.Request) {
+	platform := os.Getenv("PLATFORM")
+	if platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	cfg.FileserverHits.Store(0)
+
+	if err := cfg.DB.ResetUsers(r.Context()); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
