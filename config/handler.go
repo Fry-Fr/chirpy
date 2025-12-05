@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/mail"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 func HandleHealthzStatus(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +63,52 @@ func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 	payload := resVals{CleanedBody: cleaned_body}
 	respondWithJSON(w, http.StatusOK, payload)
+}
+
+func (cfg *ApiConfig) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+	type reqParams struct {
+		Email string `json:"email"`
+	}
+	params := reqParams{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+	email := strings.TrimSpace(params.Email)
+	if email == "" {
+		respondWithError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+	if !isValidEmail(email) {
+		respondWithError(w, http.StatusBadRequest, "invalid email")
+		return
+	}
+
+	user, err := cfg.DB.CreateUser(r.Context(), params.Email)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong creating user")
+		return
+	}
+	type resVars struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Email     string    `json:"email"`
+	}
+	payload := resVars{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+	respondWithJSON(w, http.StatusCreated, payload)
+}
+
+// Handler Helpers ...
+func isValidEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
 
 func profaneWordSanitizer(s string) string {

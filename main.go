@@ -23,6 +23,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", config.HandleHealthzStatus)
 
 	mux.HandleFunc("POST /api/validate_chirp", config.HandleValidateChirp)
+	mux.HandleFunc("POST /api/users", cfg.HandleCreateUser)
 	mux.Handle("/app/", handlerFileServ)
 
 	server := &http.Server{
