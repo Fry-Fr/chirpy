@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fry-Fr/chirpy/internal/auth"
 	"github.com/Fry-Fr/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -54,7 +55,8 @@ func (cfg *ApiConfig) HandleMetricsLoad(w http.ResponseWriter, r *http.Request) 
 
 func (cfg *ApiConfig) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	type reqParams struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	params := reqParams{}
 	decoder := json.NewDecoder(r.Body)
@@ -72,7 +74,17 @@ func (cfg *ApiConfig) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.DB.CreateUser(r.Context(), params.Email)
+	hashed_pw, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	user_params := database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashed_pw,
+	}
+	user, err := cfg.DB.CreateUser(r.Context(), user_params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong creating user")
 		return
