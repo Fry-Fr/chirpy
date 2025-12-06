@@ -22,6 +22,7 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", cfg.HandleMetricsLoad)
 	mux.HandleFunc("GET /api/healthz", config.HandleHealthzStatus)
 
+	mux.HandleFunc("POST /api/login", cfg.HandleLogin)
 	mux.HandleFunc("GET /api/chirps/{chirpId}", cfg.HandleGetChirp)
 	mux.HandleFunc("GET /api/chirps", cfg.HandleGetChirps)
 	mux.HandleFunc("POST /api/chirps", cfg.HandleCreateChirp)

@@ -210,6 +210,49 @@ func (cfg *ApiConfig) HandleGetChirp(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, payload)
 }
 
+func (cfg *ApiConfig) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	type reqParams struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	params := reqParams{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	usr, err := cfg.DB.GetUserByEmail(r.Context(), params.Email)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	match, err := auth.CheckPasswordHash(params.Password, usr.HashedPassword)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if !match {
+		respondWithError(w, http.StatusUnauthorized, "email password do not match")
+		return
+	}
+
+	type resVars struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Email     string    `json:"email"`
+	}
+	payload := resVars{
+		ID:        usr.ID,
+		CreatedAt: usr.CreatedAt,
+		UpdatedAt: usr.UpdatedAt,
+		Email:     usr.Email,
+	}
+	respondWithJSON(w, http.StatusOK, payload)
+}
+
 // Handler Helpers ...
 func isValidEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
