@@ -4,7 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Fry-Fr/chirpy/config"
+	"github.com/Fry-Fr/chirpy/internal/config"
+	"github.com/Fry-Fr/chirpy/internal/handlers"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -18,15 +19,30 @@ func main() {
 
 	handlerFileServ := cfg.MiddlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir("./app"))))
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /admin/reset", cfg.HandleMetricsReset)
-	mux.HandleFunc("GET /admin/metrics", cfg.HandleMetricsLoad)
-	mux.HandleFunc("GET /api/healthz", config.HandleHealthzStatus)
 
-	mux.HandleFunc("POST /api/login", cfg.HandleLogin)
-	mux.HandleFunc("GET /api/chirps/{chirpId}", cfg.HandleGetChirp)
-	mux.HandleFunc("GET /api/chirps", cfg.HandleGetChirps)
-	mux.HandleFunc("POST /api/chirps", cfg.HandleCreateChirp)
-	mux.HandleFunc("POST /api/users", cfg.HandleCreateUser)
+	mux.HandleFunc("POST /admin/reset", func(w http.ResponseWriter, r *http.Request) {
+		handlers.AdminReset(cfg, w, r)
+	})
+	mux.HandleFunc("GET /admin/metrics", func(w http.ResponseWriter, r *http.Request) {
+		handlers.AdminMetrics(cfg, w, r)
+	})
+	mux.HandleFunc("GET /api/healthz", handlers.HealthStatus)
+
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		handlers.LoginUser(cfg, w, r)
+	})
+	mux.HandleFunc("GET /api/chirps/{chirpId}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetChirp(cfg, w, r)
+	})
+	mux.HandleFunc("GET /api/chirps", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetChirps(cfg, w, r)
+	})
+	mux.HandleFunc("POST /api/chirps", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CreateChirp(cfg, w, r)
+	})
+	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CreateUser(cfg, w, r)
+	})
 	mux.Handle("/app/", handlerFileServ)
 
 	server := &http.Server{
