@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fry-Fr/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -51,32 +52,6 @@ func (cfg *ApiConfig) HandleMetricsLoad(w http.ResponseWriter, r *http.Request) 
 	w.Write([]byte(display))
 }
 
-func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
-	type reqParams struct {
-		Body string `json:"body"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := reqParams{}
-
-	if err := decoder.Decode(&params); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
-		return
-	}
-
-	const max_chirp_len = 140
-	if len(params.Body) > max_chirp_len {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		return
-	}
-	cleaned_body := profaneWordSanitizer(params.Body)
-
-	type resVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-	payload := resVals{CleanedBody: cleaned_body}
-	respondWithJSON(w, http.StatusOK, payload)
-}
-
 func (cfg *ApiConfig) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	type reqParams struct {
 		Email string `json:"email"`
@@ -113,6 +88,51 @@ func (cfg *ApiConfig) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+	}
+	respondWithJSON(w, http.StatusCreated, payload)
+}
+
+func (cfg *ApiConfig) HandleCreateChirp(w http.ResponseWriter, r *http.Request) {
+	type reqParams struct {
+		Body   string    `json:"body"`
+		UserId uuid.UUID `json:"user_id"`
+	}
+	params := &reqParams{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(params); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	const max_chirp_len = 140
+	if len(params.Body) > max_chirp_len {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+		return
+	}
+	cleaned_body := profaneWordSanitizer(params.Body)
+
+	chirp := database.CreateChirpParams{
+		Body:   cleaned_body,
+		UserID: params.UserId,
+	}
+	c, err := cfg.DB.CreateChirp(r.Context(), chirp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	type resVars struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		UserID    uuid.UUID `json:"user_id"`
+	}
+	payload := resVars{
+		ID:        c.ID,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+		Body:      c.Body,
+		UserID:    c.UserID,
 	}
 	respondWithJSON(w, http.StatusCreated, payload)
 }
