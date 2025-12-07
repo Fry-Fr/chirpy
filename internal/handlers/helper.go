@@ -6,7 +6,21 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+
+	"github.com/Fry-Fr/chirpy/internal/auth"
 )
+
+func AuthenticateUser(w http.ResponseWriter, r *http.Request) error {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		return err
+	}
+	_, err = auth.ValidateJWT(token, auth.GetJWTSecret())
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func IsValidEmail(email string) bool {
 	_, err := mail.ParseAddress(email)

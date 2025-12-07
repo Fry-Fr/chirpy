@@ -11,6 +11,10 @@ import (
 )
 
 func CreateChirp(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) {
+	if err := AuthenticateUser(w, r); err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
 	type reqParams struct {
 		Body   string    `json:"body"`
 		UserId uuid.UUID `json:"user_id"`
