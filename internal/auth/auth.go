@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+	"net/http"
 	"runtime"
 	"time"
 
@@ -62,4 +64,19 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	} else {
 		return uuid.Nil, jwt.ErrTokenInvalidClaims
 	}
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", http.ErrNoCookie
+	}
+
+	var tokenType, token string
+	_, err := fmt.Sscanf(authHeader, "%s %s", &tokenType, &token)
+	if err != nil || tokenType != "Bearer" {
+		return "", http.ErrNoCookie
+	}
+
+	return token, nil
 }

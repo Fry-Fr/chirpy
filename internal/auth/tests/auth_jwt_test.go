@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -149,5 +150,20 @@ func TestJWTRoundTrip(t *testing.T) {
 
 	if returnedUserID != userID {
 		t.Errorf("Round trip failed: expected %v, got %v", userID, returnedUserID)
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	httpHeaders := http.Header{}
+	httpHeaders.Set("Authorization", "Bearer test-token-123")
+
+	token, err := auth.GetBearerToken(httpHeaders)
+	if err != nil {
+		t.Fatalf("GetBearerToken() failed: %v", err)
+	}
+
+	expectedToken := "test-token-123"
+	if token != expectedToken {
+		t.Errorf("GetBearerToken() = %v, want %v", token, expectedToken)
 	}
 }
