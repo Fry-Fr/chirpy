@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
@@ -79,4 +80,8 @@ func GetBearerToken(headers http.Header) (string, error) {
 	}
 
 	return token, nil
+}
+
+func GetJWTSecret() string {
+	return os.Getenv("JWT_SECRET")
 }
