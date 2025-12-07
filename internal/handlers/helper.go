@@ -8,18 +8,19 @@ import (
 	"strings"
 
 	"github.com/Fry-Fr/chirpy/internal/auth"
+	"github.com/google/uuid"
 )
 
-func AuthenticateUser(w http.ResponseWriter, r *http.Request) error {
+func AuthenticateUser(w http.ResponseWriter, r *http.Request) (uuid.UUID, error) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
-	_, err = auth.ValidateJWT(token, auth.GetJWTSecret())
+	userId, err := auth.ValidateJWT(token, auth.GetJWTSecret())
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
-	return nil
+	return userId, nil
 }
 
 func IsValidEmail(email string) bool {

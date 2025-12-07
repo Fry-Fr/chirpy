@@ -11,13 +11,13 @@ import (
 )
 
 func CreateChirp(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) {
-	if err := AuthenticateUser(w, r); err != nil {
+	userId, err := AuthenticateUser(w, r)
+	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 	type reqParams struct {
-		Body   string    `json:"body"`
-		UserId uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 	params := &reqParams{}
 	decoder := json.NewDecoder(r.Body)
@@ -34,7 +34,7 @@ func CreateChirp(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) 
 
 	chirp := database.CreateChirpParams{
 		Body:   cleaned_body,
-		UserID: params.UserId,
+		UserID: userId,
 	}
 	c, err := cfg.DB.CreateChirp(r.Context(), chirp)
 	if err != nil {
