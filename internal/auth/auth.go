@@ -1,12 +1,17 @@
 package auth
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
 
+	"github.com/Fry-Fr/chirpy/internal/config"
+	"github.com/Fry-Fr/chirpy/internal/database"
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -84,4 +89,38 @@ func GetBearerToken(headers http.Header) (string, error) {
 
 func GetJWTSecret() string {
 	return os.Getenv("JWT_SECRET")
+}
+
+func MakeRefreshToken(cfg *config.ApiConfig, userId uuid.UUID) (string, error) {
+	key := make([]byte, 32)
+	rand.Read(key)
+	encodedStr := hex.EncodeToString(key)
+
+	refresh_tkn := encodedStr
+	expires_in_hours := 1440 // default 60 days
+	create_refresh_token_params := database.CreateRefreshTokenParams{
+		Token:     refresh_tkn,
+		UserID:    userId,
+		ExpiresAt: time.Now().Add(time.Duration(expires_in_hours) * time.Hour),
+	}
+	refreshToken, err := cfg.DB.CreateRefreshToken(context.Background(), create_refresh_token_params)
+	if err != nil {
+		return "", err
+	}
+	return refreshToken.Token, nil
+}
+
+func GetRefreshToken(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", http.ErrNoCookie
+	}
+
+	var tokenType, token string
+	_, err := fmt.Sscanf(authHeader, "%s %s", &tokenType, &token)
+	if err != nil || tokenType != "Bearer" {
+		return "", http.ErrNoCookie
+	}
+
+	return token, nil
 }

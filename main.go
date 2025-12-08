@@ -28,6 +28,12 @@ func main() {
 	})
 	mux.HandleFunc("GET /api/healthz", handlers.HealthStatus)
 
+	mux.HandleFunc("POST /api/refresh", func(w http.ResponseWriter, r *http.Request) {
+		handlers.RefreshToken(cfg, w, r)
+	})
+	mux.HandleFunc("POST /api/revoke", func(w http.ResponseWriter, r *http.Request) {
+		handlers.RevokeToken(cfg, w, r)
+	})
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
 		handlers.LoginUser(cfg, w, r)
 	})
