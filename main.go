@@ -40,6 +40,9 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpId}", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetChirp(cfg, w, r)
 	})
+	mux.HandleFunc("DELETE /api/chirps/{chirpId}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.DeleteChirp(cfg, w, r)
+	})
 	mux.HandleFunc("GET /api/chirps", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetChirps(cfg, w, r)
 	})
