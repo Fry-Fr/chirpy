@@ -55,6 +55,9 @@ func main() {
 	mux.HandleFunc("PUT /api/users", func(w http.ResponseWriter, r *http.Request) {
 		handlers.UpdateUser(cfg, w, r)
 	})
+	mux.HandleFunc("POST /api/polka/webhooks", func(w http.ResponseWriter, r *http.Request) {
+		handlers.PolkaWebhooks(cfg, w, r)
+	})
 	mux.Handle("/app/", handlerFileServ)
 
 	server := &http.Server{
