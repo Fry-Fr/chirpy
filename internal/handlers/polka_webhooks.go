@@ -4,12 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Fry-Fr/chirpy/internal/auth"
 	"github.com/Fry-Fr/chirpy/internal/config"
 	"github.com/Fry-Fr/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 func PolkaWebhooks(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) {
+	_, err := auth.GetPolkaKey(r.Header)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 	type reqVars struct {
 		EventType string `json:"event"`
 		Data      struct {
@@ -32,7 +38,7 @@ func PolkaWebhooks(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request
 		ID:          params.Data.UserId,
 		IsChirpyRed: true,
 	}
-	_, err := cfg.DB.UpdateUserChirpyRed(r.Context(), updateUserParams)
+	_, err = cfg.DB.UpdateUserChirpyRed(r.Context(), updateUserParams)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, err.Error())
 		return

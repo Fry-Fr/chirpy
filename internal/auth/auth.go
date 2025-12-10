@@ -124,3 +124,23 @@ func GetRefreshToken(headers http.Header) (string, error) {
 
 	return token, nil
 }
+
+func GetPolkaKey(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", http.ErrNoCookie
+	}
+
+	var tokenType, token string
+	_, err := fmt.Sscanf(authHeader, "%s %s", &tokenType, &token)
+	if err != nil || tokenType != "ApiKey" {
+		return "", http.ErrNoCookie
+	}
+
+	if token != os.Getenv("POLKA_KEY") {
+		return "", http.ErrNoCookie
+	}
+
+	return token, nil
+	// return os.Getenv("POLKA_KEY")
+}
