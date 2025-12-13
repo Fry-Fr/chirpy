@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Fry-Fr/chirpy/internal/config"
+	"github.com/Fry-Fr/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -12,6 +13,16 @@ func GetChirps(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.DB.GetChirps(r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	author_id := r.URL.Query().Get("author_id")
+	if author_id != "" {
+		filteredChirps := make([]database.Chirp, 0)
+		for _, chirp := range chirps {
+			if chirp.UserID.String() == author_id {
+				filteredChirps = append(filteredChirps, chirp)
+			}
+		}
+		chirps = filteredChirps
 	}
 
 	type resVars struct {
