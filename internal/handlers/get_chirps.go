@@ -24,6 +24,12 @@ func GetChirps(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request) {
 		}
 		chirps = filteredChirps
 	}
+	sort := r.URL.Query().Get("sort")
+	if sort == "desc" {
+		for i, j := 0, len(chirps)-1; i < j; i, j = i+1, j-1 {
+			chirps[i], chirps[j] = chirps[j], chirps[i]
+		}
+	}
 
 	type resVars struct {
 		ID        uuid.UUID `json:"id"`
